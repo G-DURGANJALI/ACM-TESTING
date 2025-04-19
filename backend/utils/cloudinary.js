@@ -1,9 +1,10 @@
 import { v2 as cloudinary } from 'cloudinary';
-
+import dotenv from 'dotenv';
+dotenv.config();
 cloudinary.config({
-  cloud_name: "dz1xbcdk8" ,
-  api_key: "488573954473355",
-  api_secret: "sMRbRm42S7i0-VwHON8w96JPD7w",
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 export const deleteImage = async (url) => {
   if (!url) return;

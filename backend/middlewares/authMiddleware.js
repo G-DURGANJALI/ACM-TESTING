@@ -64,4 +64,3 @@ export const isAdmin = (req, res, next) => {
    }
 };
 // done completely
-

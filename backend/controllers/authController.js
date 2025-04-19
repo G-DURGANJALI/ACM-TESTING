@@ -160,3 +160,25 @@ export const loginClub = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+// controllers/logoutController.js
+
+export const logoutUser = async (req, res) => {
+  try {
+    console.log("inside");
+    res
+      .clearCookie("token", {
+        httpOnly: true,
+        sameSite: "Lax", // Or "None" if you're using cross-site cookies with HTTPS
+        secure: process.env.NODE_ENV === "production", // true in production
+      })
+      .status(200)
+      .json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ error: "Server error during logout" });
+  }
+};
+
+export default logoutUser;
+
+// done cpmpletely

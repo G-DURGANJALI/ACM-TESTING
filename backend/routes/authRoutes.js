@@ -20,4 +20,5 @@ router.post('/student/oauth', handleOAuthLogin);
 // Club
 router.post('/club/login', loginClub);
 router.post("/club/register", upload.single("photo"), registerClub);
+router.get("/logout", logoutUser); 
 export default router;

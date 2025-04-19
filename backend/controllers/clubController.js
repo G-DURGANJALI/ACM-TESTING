@@ -6,7 +6,20 @@ import cloudinary from "../utils/cloudinary.js";
 
 import { deleteImage } from '../utils/cloudinary.js';
 
-
+export const getblog=async(req,res)=>{
+  try{
+    const { id } = req.params;
+    
+    const blog = await Blog.findById(id);
+    if (!blog) return res.status(404).json({ message: 'Blog not found' });
+    
+    res.status(200).json(blog);
+  }catch(err)
+  {
+    console.error('Error fetching blog  info:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
 
 export const createBlog = async (req, res) => {
   try {
@@ -18,7 +31,7 @@ export const createBlog = async (req, res) => {
 
     const coverimg = req.files['coverimg']?.[0]?.path || null;
     const photos = req.files['photos']?.map((file) => file.path) || [];
-    const pdfs = req.files['pdfs']?.map((file) => file.path) || [];
+   
     if (!coverimg) {
       return res.status(400).json({ message: 'Cover image is required' });
     }
@@ -29,8 +42,7 @@ export const createBlog = async (req, res) => {
       description,
       coverimg,
       photos,
-      pdfs,
-     
+    
       authorType: 'Club',
       clubId: req.club._id,
       section: 'Club',

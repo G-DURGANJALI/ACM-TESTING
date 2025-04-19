@@ -29,10 +29,10 @@ export const getAllApprovedClubs = async (req, res) => {
 };
 // populate them according to new date 
 // 2. Get all blogs of a particular club
-export const getClubBlogs = async (req, res) => {
+export const getallblogs = async (req, res) => {
   try {
-    const { clubId } = req.params;
-    const blogs = await Blog.find({ clubId }).sort({ createdAt: -1 });
+   
+    const blogs = await Blog.find({  status: 'approved'}).sort({ createdAt: -1 });
     res.status(200).json(blogs);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch club blogs' });
@@ -188,7 +188,7 @@ export const createBlog = async (req, res) => {
 
     const coverimg = req.files['coverimg']?.[0]?.path || null;
     const photos = req.files['photos']?.map((file) => file.path) || [];
-    const pdfs = req.files['pdfs']?.map((file) => file.path) || [];
+    
     if (!coverimg) {
       return res.status(400).json({ message: 'Cover image is required' });
     }
@@ -199,7 +199,7 @@ export const createBlog = async (req, res) => {
       description,
       coverimg,
       photos,
-      pdfs,
+    
       section: section,
       authorType: 'Student',
       studentId:req.student._id,
@@ -210,7 +210,7 @@ export const createBlog = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Blog created successfully',
-      blog: newBlog,
+     
     });
   } catch (error) {
     console.error('Error creating blog:', error);

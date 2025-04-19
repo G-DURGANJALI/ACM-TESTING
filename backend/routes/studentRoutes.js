@@ -2,7 +2,7 @@ import express from 'express';
 import {
   logoutStudent,
   getAllApprovedClubs,
-  getClubBlogs,
+  getallblogs,
   getBlogsBySection,
   updateStudentProfile,
   getLikedBlogs,
@@ -41,4 +41,3 @@ router.post('/create-blog', upload.fields([
 ]),protectStudent,createBlog);
 
 export default router;
-
