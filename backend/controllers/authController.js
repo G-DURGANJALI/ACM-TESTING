@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import Student from '../models/student.js';
+import Student from '../models/Student.js';
 import Club from '../models/Club.js';
 import generateToken from '../utils/generateToken.js';
 
@@ -43,19 +43,33 @@ export const loginStudent = async (req, res) => {
       password === process.env.ADMIN_PASSWORD
     ) {
       generateToken(res, 'admin_id', 'admin');
-      return res.status(200).json({ message: 'Admin login success', isAdmin: true, });
+      return res.status(200).json({ message: 'Admin login success', isAdmin: true });
     }
 
-    const student = await Student.findOne({ email });
-    if (!student) return res.status(404).json({ message: 'Student not found' });
+    const student = await Student.findOne({ email }).select('+password');
+    if (!student) {
+      return res.status(404).json({ message: 'Invalid email or password' });
+    }
 
     const isMatch = await bcrypt.compare(password, student.password);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
 
+    // Generate token and set cookie
     generateToken(res, student._id, 'student');
-    res.status(200).json({ message: 'Student login success', student });
+
+    // Remove password from response
+    const studentResponse = student.toObject();
+    delete studentResponse.password;
+
+    res.status(200).json({
+      message: 'Student login success',
+      student: studentResponse
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Server error during login' });
   }
 };
 
@@ -179,6 +193,6 @@ export const logoutUser = async (req, res) => {
   }
 };
 
-export default logoutUser;
 
-// done cpmpletely
+
+

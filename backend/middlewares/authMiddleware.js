@@ -1,22 +1,38 @@
 import jwt from 'jsonwebtoken';
-import Student from '../models/student.js';
+import Student from '../models/Student.js';
 import Club from '../models/Club.js';
                                                         
 
 export const protectStudent = async (req, res, next) => {
   try {
     const token = req.cookies.token;
-    if (!token) return res.status(401).json({ message: 'Not authorized' });
+    
+    if (!token) {
+      return res.status(401).json({ message: 'Not authorized, please login' });
+    }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const student = await Student.findById(decoded.id).select('-password');
+    
+    // Verify token type is for student
+    if (decoded.role !== 'student') {
+      return res.status(403).json({ message: 'Not authorized as student' });
+    }
 
-    if (!student) return res.status(401).json({ message: 'Not authorized' });
+    const student = await Student.findById(decoded.id).select('-password');
+    if (!student) {
+      return res.status(401).json({ message: 'Student not found' });
+    }
 
     req.student = student;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Token invalid' });
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token, please login again' });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token expired, please login again' });
+    }
+    res.status(401).json({ message: 'Not authorized, token failed' });
   }
 };
 

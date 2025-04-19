@@ -5,6 +5,7 @@ import {
   registerClub,
   loginClub,
   handleOAuthLogin,
+  logoutUser,
 } from '../controllers/authController.js';
 import jwt from 'jsonwebtoken'
 import upload from "../middlewares/multer.js";

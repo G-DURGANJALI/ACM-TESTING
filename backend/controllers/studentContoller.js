@@ -29,10 +29,10 @@ export const getAllApprovedClubs = async (req, res) => {
 };
 // populate them according to new date 
 // 2. Get all blogs of a particular club
-export const getallblogs = async (req, res) => {
+export const getClubBlogs = async (req, res) => {
   try {
-   
-    const blogs = await Blog.find({  status: 'approved'}).sort({ createdAt: -1 });
+    const { clubId } = req.params;
+    const blogs = await Blog.find({ clubId }).sort({ createdAt: -1 });
     res.status(200).json(blogs);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch club blogs' });
@@ -188,7 +188,7 @@ export const createBlog = async (req, res) => {
 
     const coverimg = req.files['coverimg']?.[0]?.path || null;
     const photos = req.files['photos']?.map((file) => file.path) || [];
-    
+    const pdfs = req.files['pdfs']?.map((file) => file.path) || [];
     if (!coverimg) {
       return res.status(400).json({ message: 'Cover image is required' });
     }
@@ -199,7 +199,7 @@ export const createBlog = async (req, res) => {
       description,
       coverimg,
       photos,
-    
+      pdfs,
       section: section,
       authorType: 'Student',
       studentId:req.student._id,
@@ -210,7 +210,7 @@ export const createBlog = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Blog created successfully',
-     
+      blog: newBlog,
     });
   } catch (error) {
     console.error('Error creating blog:', error);
@@ -227,28 +227,20 @@ export const requestPasswordReset = async (req, res) => {
   try {
     const { email } = req.body;
     const student = await Student.findOne({ email });
-    
+
     if (!student) {
+      // For security, don't reveal whether the email exists or not
       return res.status(200).json({
         message: 'If an account with that email exists, we have sent a password reset link.'
       });
     }
-    
-    // Create JWT with user ID and password hash (as a secret fingerprint)
-    // Including current password hash in payload ensures token invalidation after password change
-    const resetToken = jwt.sign(
-      { 
-        id: student._id,
-        passwordHash: student.password.substring(0, 10) // Using part of the hash as a "fingerprint"
-      }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: '1h' }
-    );
-    
-    // In production, send via email
+  
+
+    // TODO: Send email with reset link
+    // For now, just return the token in the response
     res.status(200).json({
       message: 'If an account with that email exists, we have sent a password reset link.',
-      resetToken // TODO: Remove in production
+      resetToken // Remove this in production
     });
   } catch (error) {
     res.status(500).json({ message: 'Error processing password reset request' });
@@ -259,38 +251,28 @@ export const requestPasswordReset = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
-    if (!token || !newPassword) {
-      return res.status(400).json({ message: 'Token and new password are required' });
-    }
     
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const student = await Student.findById(decoded.id);
-    
-    if (!student) {
-      return res.status(400).json({ message: 'Invalid reset token' });
+
+    if (!student || !student.resetToken || student.resetToken !== token) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
     }
-    
-    // Check if password hash in token matches current hash (validates token is still relevant)
-    if (student.password.substring(0, 10) !== decoded.passwordHash) {
-      return res.status(400).json({ message: 'Password has already been changed' });
-    }
-    
-    // Hash new password and update student
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-    
-    student.password = hashedPassword;
-    await student.save();
-    
-    res.status(200).json({ message: 'Password has been reset successfully' });
-  } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(400).json({ message: 'Invalid token' });
-    }
-    if (error.name === 'TokenExpiredError') {
+
+    if (student.resetTokenExpiry < Date.now()) {
       return res.status(400).json({ message: 'Reset token has expired' });
     }
+
+    // Hash new password and save
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    student.password = hashedPassword;
+    student.resetToken = undefined;
+    student.resetTokenExpiry = undefined;
+    await student.save();
+
+    res.status(200).json({ message: 'Password has been reset successfully' });
+  } catch (error) {
     res.status(500).json({ message: 'Error resetting password' });
   }
 };

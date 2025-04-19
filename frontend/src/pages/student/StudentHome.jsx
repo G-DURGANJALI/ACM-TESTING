@@ -1,7 +1,8 @@
+
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, Sun, Moon, Search, CircleUserRound } from "lucide-react";
-import axios from "axios";
+import axios from "../../api/axios";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -335,4 +336,3 @@ export default StudentHome;
 // implement share functionality 
 //continue with google and forgot password 
 // logout  // profile update,show liked blogs,his blogs 
-

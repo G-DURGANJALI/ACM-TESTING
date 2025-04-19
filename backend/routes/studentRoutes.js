@@ -2,7 +2,7 @@ import express from 'express';
 import {
   logoutStudent,
   getAllApprovedClubs,
-  getallblogs,
+  // getallblogs,
   getBlogsBySection,
   updateStudentProfile,
   getLikedBlogs,
@@ -26,7 +26,7 @@ router.post('/reset-password', resetPassword);
 
 // Protected routes
 router.get('/clubs', protectStudent, getAllApprovedClubs);
-router.get('/clubs/:clubId/blogs', protectStudent, getClubBlogs);  
+// router.get('/clubs/:clubId/blogs', protectStudent, getClubBlogs);  
 router.get('/clubs/:clubId/profile', protectStudent, getclubprofile);
 router.get('/blogs/section/:section', protectStudent, getBlogsBySection);
 router.put('/update-profile', protectStudent, upload.single('profilePic'), updateStudentProfile);
