@@ -2,11 +2,13 @@ import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useSignIn } from "@clerk/clerk-react";
 
 export default function StudentLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const { signIn, setActive } = useSignIn();
 
   const loginHandler = async (e) => {
     e.preventDefault();
@@ -21,6 +23,19 @@ export default function StudentLogin() {
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Login failed");
+    }
+  };
+
+  const handleOAuthSignIn = async () => {
+    try {
+      await signIn.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: `${window.location.origin}/sso-callback`,
+        redirectUrlComplete: `${window.location.origin}/student/home`
+      });
+    } catch (err) {
+      console.error('OAuth error:', err);
+      toast.error(err.message || "Google login failed. Please try again.");
     }
   };
 
@@ -47,12 +62,32 @@ export default function StudentLogin() {
           required
         />
 
+        <p className="text-right">
+          <span
+            onClick={() => navigate("/student/forgotPassword")}
+            className="text-blue-500 hover:underline cursor-pointer"
+          >
+            Forgot Password?
+          </span>
+        </p>
+
         <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
           Login
         </button>
 
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={handleOAuthSignIn}
+            className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded flex items-center justify-center hover:bg-gray-50"
+          >
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 mr-2" />
+            Sign in with Google
+          </button>
+        </div>
+
         <p className="mt-4 text-center">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <span
             onClick={() => navigate("/student/register")}
             className="text-blue-500 hover:underline cursor-pointer"
@@ -64,4 +99,3 @@ export default function StudentLogin() {
     </div>
   );
 }
-// done 

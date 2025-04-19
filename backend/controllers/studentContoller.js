@@ -1,13 +1,21 @@
-import Student from '../models/student.js';
+import Student from '../models/Student.js';
 import Blog from '../models/Blog.js';
 import cloudinary from 'cloudinary';
 import Club from '../models/Club.js'
-
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 //  Logout Student
-export const logoutStudent = (req, res) => {
-  res.cookie('token', '', { maxAge: 1 });
-  res.status(200).json({ message: 'Logged out successfully' });
+export const logoutStudent = async (req, res) => {
+  try {
+    // Clear our custom auth token
+    res.cookie('token', '', { maxAge: 1 });
+
+    // If the student has a clerkId, we don't need to do anything extra as Clerk handles its own cleanup
+    res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error logging out' });
+  }
 };
 
 // 1. Get all approved clubs
@@ -211,5 +219,78 @@ export const createBlog = async (req, res) => {
       message: 'Failed to create blog',
       error: error.message,
     });
+  }
+};
+
+// Request password reset
+export const requestPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const student = await Student.findOne({ email });
+    
+    if (!student) {
+      return res.status(200).json({
+        message: 'If an account with that email exists, we have sent a password reset link.'
+      });
+    }
+    
+    // Create JWT with user ID and password hash (as a secret fingerprint)
+    // Including current password hash in payload ensures token invalidation after password change
+    const resetToken = jwt.sign(
+      { 
+        id: student._id,
+        passwordHash: student.password.substring(0, 10) // Using part of the hash as a "fingerprint"
+      }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '1h' }
+    );
+    
+    // In production, send via email
+    res.status(200).json({
+      message: 'If an account with that email exists, we have sent a password reset link.',
+      resetToken // TODO: Remove in production
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error processing password reset request' });
+  }
+};
+
+// Reset password using token
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: 'Token and new password are required' });
+    }
+    
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const student = await Student.findById(decoded.id);
+    
+    if (!student) {
+      return res.status(400).json({ message: 'Invalid reset token' });
+    }
+    
+    // Check if password hash in token matches current hash (validates token is still relevant)
+    if (student.password.substring(0, 10) !== decoded.passwordHash) {
+      return res.status(400).json({ message: 'Password has already been changed' });
+    }
+    
+    // Hash new password and update student
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    student.password = hashedPassword;
+    await student.save();
+    
+    res.status(200).json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(400).json({ message: 'Invalid token' });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(400).json({ message: 'Reset token has expired' });
+    }
+    res.status(500).json({ message: 'Error resetting password' });
   }
 };

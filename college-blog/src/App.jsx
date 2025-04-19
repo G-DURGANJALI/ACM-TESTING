@@ -14,65 +14,47 @@ import StudentPasswordEditSection from './pages/student/StudentPasswordEditSecti
 import ClubHome from './pages/club/ClubHome';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import NotFound from './pages/NotFound';
-
+import SSOCallback from './pages/auth/SSOCallback';
+import { ClerkProvider } from '@clerk/clerk-react';
 
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import ForgotPassword from './pages/student/ForgotPassword';
 axios.defaults.withCredentials = true;
 
 export default function App() {
-
-
- 
- 
   return (
-    
-    <Router>
-         <ToastContainer position="top-right" autoClose={3000} />
-      <Routes>
-        {/* Landing/Home Page */}
-        <Route path="/" element={<Home />} />
+    <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
+      <Router>
+        <ToastContainer position="top-right" autoClose={3000} />
+        <Routes>
+          {/* Landing/Home Page */}
+          <Route path="/" element={<Home />} />
 
-        {/* Student Auth */}
-        <Route path="/student/login" element={<StudentLogin />} />
-        <Route path="/student/register" element={<StudentRegister />} />
-        <Route path="/StudentProfileSection" element={<StudentProfileSection />} />
-        <Route path="/StudentProfileEditSection" element={<StudentProfileEditSection/>} />
-        <Route path="/StudentPasswordEditSection" element={<StudentPasswordEditSection/>} />
+          {/* Auth Routes */}
+          <Route path="/sso-callback" element={<SSOCallback />} />
+          
+          {/* Student Auth */}
+          <Route path="/student/login" element={<StudentLogin />} />
+          <Route path="/student/register" element={<StudentRegister />} />
+          <Route path="/StudentProfileSection" element={<StudentProfileSection />} />
+          <Route path="/StudentProfileEditSection" element={<StudentProfileEditSection />} />
+          <Route path="/StudentPasswordEditSection" element={<StudentPasswordEditSection />} />
+          <Route path="/student/forgotPassword" element={<ForgotPassword />} />
 
+          {/* Club Auth */}
+          <Route path="/club/login" element={<ClubLogin />} />
+          <Route path="/club/register" element={<ClubRegister />} />
 
+          {/* Redirect based on role */}
+          <Route path="/student/home" element={<StudentHome />} />
+          <Route path="/club/home" element={<ClubHome />} />
+          <Route path="/admin" element={<AdminDashboard />} />
 
-
-        {/* Club Auth */}
-        <Route path="/club/login" element={<ClubLogin />} />
-        <Route path="/club/register" element={<ClubRegister />} />
-
-        {/* Redirect based on role */}
-        <Route
-          path="/student/home"
-          element={
-            <StudentHome /> 
-          }
-        />
-
-        <Route
-          path="/club/home"
-          element={
-            <ClubHome /> 
-          }
-        />
-
-        <Route
-          path="/admin"
-          element={
-            <AdminDashboard /> 
-          }
-        />
-  
-
-        {/* 404 Page */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Router>
+          {/* 404 Page */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+    </ClerkProvider>
   );
 }

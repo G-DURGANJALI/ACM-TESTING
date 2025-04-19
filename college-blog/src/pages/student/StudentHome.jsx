@@ -4,6 +4,7 @@ import { Search, Menu, X, CircleUserRound , Moon, Sun } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import StudentProfileSection from "./StudentProfileSection.jsx";
+import { useClerk } from "@clerk/clerk-react";
 
 const StudentHome = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -14,6 +15,7 @@ const StudentHome = () => {
   const [likedBlogs, setLikedBlogs] = useState([]);
   const [savedBlogs, setSavedBlogs] = useState([]);
   const navigate = useNavigate();
+  const { signOut } = useClerk();
 
   // Fetching blogs and clubs data
   const fetchData = async () => {
@@ -63,6 +65,21 @@ const StudentHome = () => {
   const toggleTheme = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle("dark");
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      // Sign out from Clerk
+      await signOut();
+      // Sign out from our backend
+      await axios.post("http://localhost:5000/api/students/logout");
+      toast.success("Logged out successfully");
+      navigate("/student/login");
+    } catch (err) {
+      console.error("Logout error:", err);
+      toast.error("Error logging out");
+    }
   };
 
   // Filter blogs based on search term
@@ -140,7 +157,7 @@ const StudentHome = () => {
             </button>
 
             {/* Logout */}
-            <button onClick={() => navigate("/student/login")} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm">
+            <button onClick={handleLogout} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm">
               Logout
             </button>
           </div>

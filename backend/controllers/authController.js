@@ -59,6 +59,52 @@ export const loginStudent = async (req, res) => {
   }
 };
 
+export const handleOAuthLogin = async (req, res) => {
+  const { email, name, clerkId, photo } = req.body;
+  console.log('OAuth Login Request:', { email, name, clerkId });
+
+  try {
+    // Check if user exists
+    let student = await Student.findOne({ email });
+    console.log('Existing student:', student);
+
+    if (!student) {
+      // Create new user if doesn't exist
+      student = await Student.create({
+        name,
+        email,
+        clerkId,
+        profilePic: photo
+      });
+      console.log('Created new student:', student);
+    } else {
+      // Update existing user with Clerk ID if needed
+      if (!student.clerkId) {
+        student.clerkId = clerkId;
+        student.profilePic = photo || student.profilePic;
+        await student.save();
+        console.log('Updated existing student with clerk ID:', student);
+      }
+    }
+
+    // Generate token and send response
+    generateToken(res, student._id, 'student');
+    res.status(200).json({ 
+      message: 'OAuth login successful',
+      token: true,
+      student: {
+        _id: student._id,
+        name: student.name,
+        email: student.email,
+        profilePic: student.profilePic
+      }
+    });
+  } catch (error) {
+    console.error('OAuth login error:', error);
+    res.status(500).json({ message: 'OAuth login failed' });
+  }
+};
+
 // -------------------------- Club -------------------------------
 export const registerClub = async (req, res) => {
   const { name, password, description } = req.body;
